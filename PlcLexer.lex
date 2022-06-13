@@ -20,40 +20,40 @@ fun getLineAsString() =
         Int.toString lineNum
     end
 
+fun keyWord(cmd, fpart, spart) =
+    case cmd of 
+        "var" => VAR(fpart, spart)
+        | "fun" => FUN(fpart, spart)
+        | "if" => IF(fpart, spart)
+        | "then" => THEN(fpart, spart)
+        | "else" => ELSE(fpart, spart)
+        | "rec" => REC(fpart, spart)
+        | "hd" => HD(fpart, spart)
+        | "tl" => TL(fpart, spart)
+        | "match" => MATCH(fpart, spart)
+        | "with" => WITH(fpart, spart)
+        | "ise" => ISE(fpart, spart)
+        | "fn" => ANONF(fpart, spart)
+        | "end" => END(fpart, spart)
+        | "true" => TRUE(fpart, spart)
+        | "false" => FALSE(fpart, spart)
+        | "print" => PRINT(fpart, spart)
+        | "Int" => INT(fpart, spart)
+        | "Nil" => NIL(fpart, spart)
+        | "Bool" => BOOL(fpart, spart)
+        | "_" => UNDERSCORE(fpart, spart)
+        | _   => NAME(cmd, fpart, spart)
+
+fun stringToInt text =
+    case Int.fromString text of
+        SOME i => i
+        | NONE => raise Fail("Error converting the string " ^ text)
+
 (* Define what to do when the end of the file is reached. *)
 fun eof() = Tokens.EOF(0,0)
 
 (* Initialize the lexer. *)
 fun init() =()
-
-fun keyWord(cmd, fpart, rpart) =
-    case cmd of 
-        "var" => VAR(fpart, rpart)
-        | "fun" => FUN(fpart, rpart)
-        | "if" => IF(fpart, rpart)
-        | "then" => THEN(fpart, rpart)
-        | "else" => ELSE(fpart, rpart)
-        | "with" => WITH(fpart, rpart)
-        | "match" => MATCH(fpart, rpart)
-        | "rec" => REC(fpart, rpart)
-        | "hd" => HD(fpart, rpart)
-        | "print" => PRINT(fpart, rpart)
-        | "end" => END(fpart, rpart)
-        | "ise" => ISE(fpart, rpart)
-        | "Bool" => BOOL(fpart, rpart)
-        | "fn" => ANONF(fpart, rpart)
-        | "tl" => TL(fpart, rpart)
-        | "false" => FALSE(fpart, rpart)
-        | "true" => TRUE(fpart, rpart)
-        | "Nil" => NIL(fpart, rpart)
-        | "Int" => INT(fpart, rpart)
-        | "_" => UNDERSCORE(fpart, rpart)
-        | _   => NAME(s, fpart, rpart)
-
-fun stoi text =
-    case Int.fromString text of
-        SOME i => i
-        | NONE => raise Fail("Erro ao converter a string " ^ text)
 
 %%
 %header(functor PlcLexerFun(structure Tokens: PlcParser_TOKENS));
@@ -61,12 +61,15 @@ alpha=[A-Za-z];
 digit=[0-9];
 whitespace=[\ \t];
 identifier=[a-zA-Z_][a-zA-Z_0-9]*;
+%s COMMENT;
+startcomment=\(\*;
+endcomment=\*\);
 
 %%
 
 \n => (lineNumber := !lineNumber + 1; lex());
 {whitespace}+ => (lex());
-{digit}+ => (CINT(stoi(yytext), yypos, yypos));
+{digit}+ => (CINT(stringToInt(yytext), yypos, yypos));
 {identifier} => (keyWord(yytext, yypos, yypos));
 ":" => (COLON(yypos, yypos));
 "!" => (NOT(yypos, yypos));
@@ -91,5 +94,7 @@ identifier=[a-zA-Z_][a-zA-Z_0-9]*;
 "," => (COMMA(yypos, yypos));
 "|" => (PIPE(yypos, yypos));
 "->" => (MARROW(yypos, yypos));
+{startcomment} => (YYBEGIN COMMENT; lex());
+{endcomment} => (YYBEGIN INITIAL; lex());
 . => (lex());
 . => (error("\n***Lexer error bad character ***\n"); raise Fail("Lexer error: bad character " ^yytext));
