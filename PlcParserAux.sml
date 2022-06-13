@@ -2,9 +2,8 @@
 
 (* Creat the body of a function expression. *)
 fun makeFunAux (n: int, xs: (plcType * string) list, e: expr): expr =
-    case xs of
-			[] => e
-		| (t,x)::r => Let(x, Item(n, Var "$list"), makeFunAux ((n +1), r, e) );
+    case xs of [] => e
+		| (a, b)::t => Let(b, Item(n, Var "$list"), makeFunAux ((n + 1), t, e));
 
 (* Create the list of arguments of a function. *)
 fun makeType (args: (plcType * string) list): plcType =
